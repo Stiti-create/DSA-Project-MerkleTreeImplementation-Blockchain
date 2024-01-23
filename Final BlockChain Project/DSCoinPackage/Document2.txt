@@ -1,0 +1,99 @@
+package DSCoinPackage;
+import HelperClasses.*;
+public class Moderator
+ {
+
+  public void initializeDSCoin(DSCoin_Honest DSObj, int coinCount) {
+		Members member = new Members();
+		member.UID = "Moderator";
+		int counter= 0;
+		int k=100000;
+		while(k<100000+coinCount){
+		
+			Transaction newtransaction = new Transaction();
+			newtransaction.Destination = DSObj.memberlist[counter%DSObj.memberlist.length];
+			newtransaction.coinID = Integer.toString(k);
+			newtransaction.Source = member;
+			DSObj.pendingTransactions.AddTransactions(newtransaction);
+			counter++;
+			k++;
+		}
+
+		DSObj.latestCoinID = Integer.toString(k-1);
+		int counter1 = coinCount;
+		while(counter1>0){
+			Transaction[] newtrans = new Transaction[DSObj.bChain.tr_count];
+			int i = 0;
+			try{
+			while(i<DSObj.bChain.tr_count){
+					Transaction temp = DSObj.pendingTransactions.RemoveTransaction();
+					newtrans[i] = temp;
+					i++;
+				}
+			}
+			catch(EmptyQueueException e)	{}
+			System.out.println("transactions removed successfully");
+			TransactionBlock newblock = new TransactionBlock(newtrans);
+			i--;
+			while(i>=0){
+					Pair<String,TransactionBlock> p= new Pair<String,TransactionBlock>(newtrans[i].coinID,newblock);
+					newtrans[i].Destination.mycoins.add(p);
+					i--;
+				}
+			//System.out.println("coin, srcblock added in myCoins loop exited");
+			DSObj.bChain.InsertBlock_Honest(newblock);
+			counter1-= DSObj.bChain.tr_count;
+			//System.out.println("first iteration of adding tb done");
+	    }
+
+		return;
+	
+    }
+    
+
+  
+    
+  public void initializeDSCoin(DSCoin_Malicious DSObj, int coinCount) {
+	Members member = new Members();
+	member.UID = "Moderator";
+	int counter= 0;
+	int k=100000;
+	while(k<100000+coinCount){
+	
+		Transaction newtransaction = new Transaction();
+		newtransaction.Destination = DSObj.memberlist[counter%DSObj.memberlist.length];
+		newtransaction.coinID = Integer.toString(k);
+		newtransaction.Source = member;
+		DSObj.pendingTransactions.AddTransactions(newtransaction);
+		counter++;
+		k++;
+	}
+
+	DSObj.latestCoinID = Integer.toString(k-1);
+	int counter1 = coinCount;
+	while(counter1>0){
+		Transaction[] newtrans = new Transaction[DSObj.bChain.tr_count];
+		int i = 0;
+		try{
+		while(i<DSObj.bChain.tr_count){
+				Transaction temp = DSObj.pendingTransactions.RemoveTransaction();
+				newtrans[i] = temp;
+				i++;
+			}
+		}	catch(EmptyQueueException e)	{}	
+		TransactionBlock newblock = new TransactionBlock(newtrans);
+		
+		while(i>0){
+				Pair<String,TransactionBlock> p= new Pair<String,TransactionBlock>(newtrans[DSObj.bChain.tr_count-i].coinID,newblock);
+				//p.first=newtrans[i].coinID;
+			//	p.second=newblock;
+				newtrans[DSObj.bChain.tr_count-i].Destination.mycoins.add(p);
+				i--;
+			}
+		DSObj.bChain.InsertBlock_Malicious(newblock);
+		counter1-= DSObj.bChain.tr_count;
+	}
+	return;
+
+  }
+}
